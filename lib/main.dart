@@ -1,12 +1,28 @@
+
+
 import 'package:flutter/material.dart';
 import 'dart:math' show Random;
 
-void main() {
-  runApp(const MyApp());
-}
+import 'package:workspaceflutter/screens/home.dart';
+import 'package:workspaceflutter/screens/nextPage.dart';
+import 'package:workspaceflutter/screens/param.dart';
+
+import 'models/my_flutter_app_icons.dart';
+import 'package:json_theme/json_theme.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
+
+  Future<void> main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    final themeStr = await rootBundle.loadString('assets/ThemeAlbum.json');
+    final themeJson = jsonDecode(themeStr);
+    final theme = ThemeDecoder.decodeThemeData(themeJson)!;
+    runApp(MyApp(theme : theme));
+  }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final ThemeData theme;
+  const MyApp({Key? key, required this.theme}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -14,10 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false ,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
+      theme: theme,
       home: const MyHomePage(title: 'Découverte de Flutter'),
     );
   }
@@ -35,165 +48,65 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   int currentPageIndex = 0;
-  int _counter = 0;
-  int num = 0;
+  home h = new home(compter: 0);
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  _getDrawerItemWidget(int pos) {
+    switch(pos) {
+      case 0:
+        return h;
+      case 1:
+        return new nextPage(initialValue: h.compter);
+      case 2:
+        return new param();
+
+      default:
+        return new Text("Erreur de page");
+    }
   }
 
-  void _decrementCounter() {
-    setState(() {
-      _counter--;
-    });
-  }
-
-  void _restart() {
-    setState(() {
-      _counter = 0;
-    });
-  }
-
-  void _random() {
-    setState(() {
-      var random = new Random();
-      num = random.nextInt(100);
-    });
+  @override
+  void initState(){
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body:<Widget>[
-        Container(
-          child: ListView(
-              children: <Widget>[
-            Image.asset('images/dice.jpg',
-              width: 300,
-              height: 200,
-              fit: BoxFit.scaleDown,
-            ),
-
-                Align(
-                  child: Text(
-                    '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-            ],
-          ),
+    return Column(
+      children: [
+        AppBar(
+          key: Key('appBarPrincipale'),
+          title: Text('Aléatoire et Musiques'),
         ),
 
-        Container(
-            color: Colors.red,
-            alignment: Alignment.center,
-          child: ListView(
-            children: <Widget>[
-              Align(
-                alignment: Alignment.center,
-                child: Text(
-                  '$num',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-              ),
-              Align(
-                child: const Text('Générer un nombre aléatoire'),
-                alignment: Alignment.center,
-              ),
-              Align(
-                alignment: Alignment.center,
-                child: TextButton(
-                      style: ButtonStyle(
-                        foregroundColor: MaterialStateProperty.all<Color>(Colors.blue),
-                        overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.hovered))
-                              return Colors.blue.withOpacity(0.04);
-                            if (states.contains(MaterialState.focused) ||
-                                states.contains(MaterialState.pressed))
-                              return Colors.blue.withOpacity(0.12);
-                            return null; // Defer to the widget's default.
-                          },
-                        ),
-                      ),
-                      onPressed: _random,
-                      child: Text('Générer')
-                ),
-              ),
-            ],
-          )
-
-        ),
-
-        Container(
-          color: Colors.yellow,
-          alignment: Alignment.center,
-          child: const Text("Paramètre"),
-        ),
-      ][currentPageIndex],
-
-      /*
-      Bouton flottant
-       */
-      floatingActionButton: Stack(
-        children: <Widget>[
-          Padding(padding: EdgeInsets.only(left: 31),
-          child: Align(
-            alignment: Alignment.bottomLeft,
-              child: FloatingActionButton(
-                onPressed: _decrementCounter,
-                child: Icon(Icons.exposure_minus_1),),
-          ),),
-
-          Align(
-            alignment: Alignment.bottomRight,
-            child: FloatingActionButton(
-              onPressed: _incrementCounter,
-            child: Icon(Icons.plus_one),),
-          ),
-
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: FloatingActionButton(
-              onPressed: _restart,
-              child: Text("Reset"),
+        Expanded(
+            child: Scaffold(
+              body: _getDrawerItemWidget(currentPageIndex),
             ),
           ),
-        ],
-      ),
 
-
-      /*
-      Barre de navigation
-       */
-      bottomNavigationBar: NavigationBar(
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPageIndex = index;
-          });
-        },
-        selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            icon: Icon(Icons.home),
-            label: "Accueil",
+          NavigationBar(
+            onDestinationSelected: (int index) {
+              setState(() {
+                currentPageIndex = index;
+              });
+            },
+            selectedIndex: currentPageIndex,
+            destinations: const <Widget>[
+              NavigationDestination(
+                icon: Icon(Icons.home),
+                label: "Accueil",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.numbers),
+                label: "Calculatrice",
+              ),
+              NavigationDestination(
+                icon: Icon(MyFlutterApp.music),
+                label: "Musique",
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.arrow_circle_right_outlined),
-            label: "Page suivante",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings),
-            label: "Paramètres",
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
