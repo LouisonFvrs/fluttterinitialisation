@@ -53,11 +53,11 @@ class _MyHomePageState extends State<MyHomePage> {
   _getDrawerItemWidget(int pos) {
     switch(pos) {
       case 0:
-        return h;
+        return new param();
       case 1:
         return new nextPage(initialValue: h.compter);
       case 2:
-        return new param();
+        return h;
 
       default:
         return new Text("Erreur de page");

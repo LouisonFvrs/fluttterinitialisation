@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:workspaceflutter/screens/unAlbum.dart';
 import '../models/Album.dart';
 
 class param extends StatefulWidget {
@@ -54,45 +56,107 @@ class _param extends State<param> {
     ),
   };
 
+  List<Album> filteredAlbums = []; // Liste des albums filtrés
+  TextEditingController searchController = TextEditingController(); // Contrôleur du champ de recherche
+
+  @override
+  void initState() {
+    super.initState();
+    filteredAlbums = albumsMap.values.toList(); // Initialiser la liste filtrée avec tous les albums
+    searchController.addListener(searchListener); // Ajouter un écouteur au champ de recherche
+  }
+
+  // Méthode pour filtrer les albums en fonction de la recherche
+  void searchListener() {
+    setState(() {
+      filteredAlbums = albumsMap.values.where((album) =>
+          album.nomAlbum!.toLowerCase().contains(searchController.text.toLowerCase())).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(8.0),
-      child: ListView.builder(
-        itemCount: albumsMap.length,
-        itemBuilder: (BuildContext context, int index) {
-          String albumKey = albumsMap.keys.elementAt(index);
-          Album album = albumsMap[albumKey]!;
-          return Card(
-            elevation: 4.0,
-            margin: EdgeInsets.symmetric(vertical: 8.0),
-            child: ListTile(
-              contentPadding: EdgeInsets.all(16.0),
-              title: Text(
-                album.nomAlbum ?? '',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18.0,
-                ),
+    return Scaffold(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25.0),
+                color: Colors.white,
               ),
-              subtitle: Text(album.description ?? ''),
-              leading: Container(
-                width: 80.0,
-                height: 80.0,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.0),
-                  image: DecorationImage(
-                    image: AssetImage('images/' + (album.image ?? '')),
-                    fit: BoxFit.cover,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Rechercher un album...',
+                    border: InputBorder.none,
                   ),
                 ),
               ),
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: filteredAlbums.length,
+              itemBuilder: (BuildContext context, int index) {
+                Album album = filteredAlbums[index];
+                bool isLiked = false; // Définir l'état initial du like
+                return Card(
+                  elevation: 4.0,
+                  margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.all(16.0),
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          album.nomAlbum ?? '',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.0,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isLiked = !isLiked; // Inverser l'état du like
+                            });
+                          },
+                          child: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border, // Utiliser l'icône like avec ou sans remplissage
+                            color: isLiked ? Colors.red : null, // Changer la couleur si l'icône est likée
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      '${album.nomGroupe ?? ''}',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                    onTap: () {
+                      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => unAlbum(
+                            description: album.description,
+                            nomGroupe: album.nomGroupe,
+                            image: album.image, // Passer le chemin de l'image
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
-
-
 }
